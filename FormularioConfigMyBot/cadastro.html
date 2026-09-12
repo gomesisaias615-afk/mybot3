@@ -28,6 +28,10 @@
       <label>A empresa faz entrega?<select name="entrega" required><option value="">Selecione</option><option>Sim</option><option>Não</option></select></label>
       <label>Permite retirada no local?<select name="retirada" required><option value="">Selecione</option><option>Sim</option><option>Não</option></select></label>
       <label>Permite consumo no salão?<select name="salao" required><option value="">Selecione</option><option>Sim</option><option>Não</option></select></label>
+      <label>Tipo de taxa de entrega<select name="taxa" required><option value="">Selecione</option><option value="fixa">Taxa fixa</option><option value="por-km">Taxa por quilômetro</option></select></label>
+      <label id="campoValorTaxa" class="optional">Valor da taxa fixa<input name="valorTaxa" inputmode="decimal" placeholder="Ex.: R$ 5,00"><small>Informe o valor cobrado em cada entrega.</small></label>
+      <label id="campoValorPorKm" class="optional">Valor por quilômetro (R$)<input name="valorPorKm" inputmode="decimal" placeholder="Ex.: R$ 1,20"><small>Informe o valor cobrado por quilômetro.</small></label>
+      <div class="hint full"><strong>Taxa editável depois.</strong>A taxa de entrega poderá ser alterada a qualquer momento pelo Portal do Administrador.</div>
     </div></section>
     <section class="card"><h2>3. Acessos aos portais</h2><p class="note">Defina senhas diferentes e seguras. Elas serão usadas para entrar nos links dos portais da sua empresa.</p><div class="hint"><strong>Portal do Administrador</strong>Dá acesso à configuração completa do bot: cardápio, preços, horários, taxas, entregas, identidade e funções do sistema.<br><br><strong>Portal do Atendente</strong>Dá acesso à operação do dia a dia: receber, acompanhar, processar e atualizar os pedidos dos clientes.</div><div class="grid">
       <label>Senha do Portal do Administrador<input name="senhaPortalAdministrador" type="password" required minlength="6" autocomplete="new-password" placeholder="Crie uma senha com pelo menos 6 caracteres"><small>Use esta senha no link do portal de administração.</small></label>
@@ -43,6 +47,11 @@
   </form><p class="footer">MyBot · Sistema de pedidos e atendimento</p></main>
   <script>
     const form=document.querySelector('#cadastro');
+    const tipoTaxa=form.querySelector('[name=taxa]');
+    const campoValorTaxa=document.querySelector('#campoValorTaxa');
+    const campoValorPorKm=document.querySelector('#campoValorPorKm');
+    function atualizarCamposTaxa(){const tipo=tipoTaxa.value;const fixa=tipo==='fixa';const porKm=tipo==='por-km';campoValorTaxa.classList.toggle('show',fixa);campoValorPorKm.classList.toggle('show',porKm);campoValorTaxa.querySelector('input').required=fixa;campoValorPorKm.querySelector('input').required=porKm;}
+    tipoTaxa.addEventListener('change',atualizarCamposTaxa);atualizarCamposTaxa();
     form.addEventListener('submit',async e=>{e.preventDefault();const botao=form.querySelector('[type=submit]'),resultado=document.querySelector('#resultado'),d=new FormData(form),campos={},arquivos=[];try{for(const[k,v]of d.entries()){if(v instanceof File){if(v.size){if(v.size>3*1024*1024)throw Error('Cada arquivo pode ter no máximo 3 MB.');arquivos.push({campo:k,nome:v.name,tipo:v.type,conteudo:await new Promise((ok,erro)=>{const l=new FileReader();l.onload=()=>ok(String(l.result).split(',')[1]);l.onerror=erro;l.readAsDataURL(v)})})}}else campos[k]=v}botao.disabled=true;botao.textContent='Enviando...';const r=await fetch('/api/formulario-empresa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({campos,arquivos})}),texto=await r.text();let dados={};try{dados=JSON.parse(texto)}catch{throw Error('O servidor de e-mail ainda não foi publicado no Render.')}if(!r.ok)throw Error(dados.erro||'Não foi possível enviar o formulário.');resultado.style.display='block';resultado.textContent='Pronto! Recebemos o cadastro. Aguarde a confirmação e os próximos passos no e-mail informado.'}catch(erro){resultado.style.display='block';resultado.style.background='#fff1f1';resultado.style.color='#9b2424';resultado.textContent=erro.message||'Não foi possível enviar agora.'}finally{botao.disabled=false;botao.textContent='Enviar cadastro para a MyBot'}});
   </script>
 </body></html>
